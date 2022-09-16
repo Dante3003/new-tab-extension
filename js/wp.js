@@ -1,5 +1,9 @@
 const WP_ROOT = "https://incredibletab.com/wpcdn/";
+const WP_API =
+  "https://api.unsplash.com/search/photos?client_id=GKBUtutxWanKqILrg3YHpp1iJfofk_uoOiJ8eb9fVyU&query=foggy forest&orientation=landscape";
 const DEFAULT_IMG_URL = "default.jpg";
+
+// chrome.storage.local.clear();
 
 const imgContainer = document.getElementById("background-image");
 let imagesInfo = null;
@@ -20,16 +24,17 @@ function checkWpInfo() {
       resolve(data);
     }
     try {
-      const response = await request.get(WP_ROOT + "wp.json");
-      const info = JSON.parse(response);
-      if (info?.length) {
+      const response = await request.get(WP_API);
+      const { results } = await response.json();
+      if (results?.length) {
         let data = [];
-        for (let i = 0; i < info.length; i++) {
-          let id = info[i].id.toString().trim();
-          storage.set(info[i].id, WP_ROOT + id + ".jpg");
+        for (let i = 0; i < results.length; i++) {
+          let id = results[i].id;
+          storage.set(results[i].id, results[i].urls?.full);
           data.push(id);
         }
         storage.set(INFO_KEY, data);
+        imagesInfo = data;
         resolve(data);
       }
     } catch (error) {
@@ -55,6 +60,7 @@ function getRandomImage(info) {
     const imgId = getRandomArrayElement(info);
     if (!imgId) reject();
     const imageUrl = await storage.get(imgId);
+    console.log("something: ", imageUrl);
     if (imageUrl) {
       resolve({ imgId, imageUrl });
     }
@@ -64,7 +70,7 @@ function getRandomImage(info) {
 
 async function getRandomCachedImage() {
   const info = await storage.get(CACHED_LIST_KEY);
-  return await getRandomImage(info);
+  return await getRandomImage(imagesInfo);
 }
 async function getRandomOnlineImage() {
   return await getRandomImage(imagesInfo);
@@ -82,7 +88,8 @@ function setImage(url) {
       reject();
     };
     setTimeout(function () {
-      reject();
+      // reject();
+      console.log("Error: File load timeout");
     }, 3500);
     imgContainer.src = url;
   });
@@ -97,7 +104,9 @@ function chooseAndCacheImage(cached) {
     if (!imgId) return reject();
     setImage(imageUrl)
       .then(() => {
-        if (!cached) cacheCurrentImage(imgId);
+        if (!cached) {
+          cacheCurrentImage(imgId);
+        }
         resolve();
       })
       .catch(() => {
@@ -110,7 +119,7 @@ function changeImage() {
   checkWpInfo()
     .then(() => {
       chooseAndCacheImage(false).catch(() => {
-        chooseAndCacheImage(true).catch(() => {
+        chooseAndCacheImage(true).catch((error) => {
           setImage(DEFAULT_IMG_URL, function () {});
         });
       });
@@ -133,7 +142,6 @@ function serializeImage(domNode) {
 function reanimateNode(elem, from, to, force) {
   if (force || elem.classList.contains(from)) {
     elem.classList.remove(from);
-    // void elem.offsetWidth;
     elem.classList.add(to);
   }
 }
@@ -144,10 +152,3 @@ function getRandomArrayElement(arr) {
   const value = arr[index];
   return value;
 }
-
-const callWrap = function (data, callback) {
-  if (data) imagesInfo = data;
-  if (callbackCalled) return;
-  callbackCalled = true;
-  callback();
-};
