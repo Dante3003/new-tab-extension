@@ -78,7 +78,6 @@ function getWeather(geoData) {
       resolve(data);
     } else {
       if (!geoData || !geoData.lat || !geoData.lon) {
-        console.error(new Error("Invalid geoData provided"));
         return reject(new Error("Invalid geoData provided"));
       }
       const weatherURL = weatherURLTemplate
@@ -87,6 +86,7 @@ function getWeather(geoData) {
       try {
         const response = await request.get(weatherURL);
         const result = await response.json();
+        console.log("weather res: ", result);
         const temp = result.main.temp;
         const icon = result.weather[0].icon;
         if (!temp || !icon)

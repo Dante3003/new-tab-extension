@@ -1,11 +1,12 @@
 const WP_ROOT = "https://incredibletab.com/wpcdn/";
 const WP_API =
   "https://api.unsplash.com/search/photos?client_id=GKBUtutxWanKqILrg3YHpp1iJfofk_uoOiJ8eb9fVyU&query=foggy forest&orientation=landscape";
-const DEFAULT_IMG_URL = "default.jpg";
+const DEFAULT_IMG_URL = "assets/default.jpg";
 
 // chrome.storage.local.clear();
 
 const imgContainer = document.getElementById("background-image");
+imgContainer.src = DEFAULT_IMG_URL;
 let imagesInfo = null;
 const storage = new Storage();
 const request = new CustomRequest();
@@ -89,7 +90,7 @@ function setImage(url) {
     };
     setTimeout(function () {
       // reject();
-      console.log("Error: File load timeout");
+      console.log("Error: Image load timeout!");
     }, 3500);
     imgContainer.src = url;
   });
